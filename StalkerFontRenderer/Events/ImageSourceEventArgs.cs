@@ -3,12 +3,7 @@ using System.Windows.Media;
 
 namespace StalkerFontRenderer.Events;
 
-public class ImageSourceEventArgs : EventArgs
+public class ImageSourceEventArgs(ImageSource imageSource) : EventArgs()
 {
-    public ImageSource ImageSource { get; }
-
-    public ImageSourceEventArgs(ImageSource imageSource) : base() 
-    {
-        ImageSource = imageSource;
-    }
+    public ImageSource ImageSource { get; } = imageSource;
 }

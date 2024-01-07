@@ -3,12 +3,12 @@ using System.Text.RegularExpressions;
 
 namespace StalkerFontProcessing.Helpers;
 
-internal static class FontConfigLoader
+internal static partial class FontConfigLoader
 {
     public static FontConfig LoadFontConfig(string path)
     {
-        var characterRegex = new Regex("^(\\d+)\\s*=\\s*(\\d+),\\s*(\\d+),\\s*(\\d+),\\s*(\\d+)");
-        var heightRegex = new Regex("^height\\s*=\\s*(\\d+)");
+        var characterRegex = CharacterRegex();
+        var heightRegex = HeightRegex();
 
         var lines = File.ReadAllLines(FontPathManager.GetConfigurationPath(path));
 
@@ -53,4 +53,10 @@ internal static class FontConfigLoader
             Characters = dictionary,
         };
     }
+
+    [GeneratedRegex("^(\\d+)\\s*=\\s*(\\d+),\\s*(\\d+),\\s*(\\d+),\\s*(\\d+)")]
+    private static partial Regex CharacterRegex();
+
+    [GeneratedRegex("^height\\s*=\\s*(\\d+)")]
+    private static partial Regex HeightRegex();
 }

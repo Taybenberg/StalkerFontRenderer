@@ -7,22 +7,32 @@ using StalkerFontRendererLibrary.Models;
 
 namespace StalkerFontProcessing;
 
-public class FontRenderer : IDisposable
+public class FontRenderer(string path) : IDisposable
 {
-    private readonly Image<Rgba32> _fontTexture;
-    private readonly FontConfig _fontConfig;
+    private readonly Image<Rgba32> _fontTexture = DdsTextureLoader.LoadTexture(path);
+    private readonly FontConfig _fontConfig = FontConfigLoader.LoadFontConfig(path);
+
+    private bool _disposed;
 
     public int FontHeight => _fontConfig.Height;
 
-    public FontRenderer(string path)
-    {
-        _fontConfig = FontConfigLoader.LoadFontConfig(path);
-        _fontTexture = DdsTextureLoader.LoadTexture(path);
-    }
-
     public void Dispose()
     {
-        _fontTexture.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _fontTexture.Dispose();
+            }
+
+            _disposed = true;
+        }
     }
 
     public void SetTextColor(byte r, byte g, byte b)
@@ -43,9 +53,7 @@ public class FontRenderer : IDisposable
     }
 
     public Task<Stream> GetFontTextureStreamAsync()
-    {
-        return GetImageStreamAsync(_fontTexture);
-    }
+        => GetImageStreamAsync(_fontTexture);
 
     public async Task<RenderResultModel> GetRenderedImageStreamAsync(TextImageModel model)
     {
@@ -54,13 +62,13 @@ public class FontRenderer : IDisposable
         var stream = await GetImageStreamAsync(image).ConfigureAwait(false);
 
         return new RenderResultModel
-        { 
-            IsCompleted = isCompleted, 
+        {
+            IsCompleted = isCompleted,
             Result = stream
         };
     }
 
-    private Image RenderTextImage(TextImageModel model, out bool isCompleted)
+    private Image<Rgba32> RenderTextImage(TextImageModel model, out bool isCompleted)
     {
         var image = new Image<Rgba32>(model.ImageWidth, model.ImageHeight, model.GetColor());
 
@@ -110,7 +118,13 @@ public class FontRenderer : IDisposable
         return image;
     }
 
-    private async Task<Stream> GetImageStreamAsync(Image image)
+    private Image<Rgba32> GetCharacter(Character character)
+        => _fontTexture.Clone(m =>
+        {
+            m.Crop(new Rectangle(character.X, character.Y, character.Width, character.Height));
+        });
+
+    private static async Task<Stream> GetImageStreamAsync(Image image)
     {
         var stream = new MemoryStream();
 
@@ -119,13 +133,5 @@ public class FontRenderer : IDisposable
         stream.Position = 0;
 
         return stream;
-    }
-
-    private Image GetCharacter(Character character)
-    {
-        return _fontTexture.Clone(m =>
-        {
-            m.Crop(new Rectangle(character.X, character.Y, character.Width, character.Height));
-        });
     }
 }

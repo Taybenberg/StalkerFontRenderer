@@ -12,7 +12,9 @@ internal static class DdsTextureLoader
         var texture = Pfimage.FromFile(FontPathManager.GetTexturePath(path));
 
         if (texture.Compressed)
+        {
             texture.Decompress();
+        }
 
         texture.ApplyColorMap();
 
@@ -25,7 +27,9 @@ internal static class DdsTextureLoader
         var clone = image.CloneAs<Rgba32>();
 
         if (texture.Format is not ImageFormat.Rgba32)
+        {
             clone.Mutate(m => m.Invert());
+        }
 
         return clone;
     }

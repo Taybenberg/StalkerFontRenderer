@@ -18,12 +18,12 @@
 
         <StackPanel
             Orientation="Horizontal">
-            
+
             <ui:Image
                 Source="pack://application:,,,/Assets/logo.png"
                 Height="64"
                 Width="64"/>
-            
+
             <StackPanel
                 Margin="10,0,0,0"
                 Orientation="Vertical">
@@ -80,7 +80,7 @@
 
         <Separator
             Margin="0,3,0,3"/>
-        
+
         <ui:TextBlock
             Margin="6"
             Text="Приєднуйтеся до Discord-спільнот ☢️"

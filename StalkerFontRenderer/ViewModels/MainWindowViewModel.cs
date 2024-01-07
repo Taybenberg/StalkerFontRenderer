@@ -19,6 +19,7 @@ namespace StalkerFontRenderer.ViewModels;
 public partial class MainWindowViewModel : ObservableObject, IDisposable
 {
     private readonly ISnackbarService _snackbarService;
+
     private FontService? _fontService;
 
     [ObservableProperty]
@@ -72,6 +73,8 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private int _characterSpacing;
 
+    private bool _disposed;
+
     public MainWindowViewModel(ISnackbarService service)
     {
         _snackbarService = service;
@@ -101,11 +104,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void OnChangeTheme() =>
-        ApplicationThemeManager.Apply(ApplicationThemeManager.GetAppTheme() is ApplicationTheme.Dark ? ApplicationTheme.Light : ApplicationTheme.Dark);
+    private static void OnChangeTheme()
+        => ApplicationThemeManager.Apply(ApplicationThemeManager.GetAppTheme() is ApplicationTheme.Dark ? ApplicationTheme.Light : ApplicationTheme.Dark);
 
     [RelayCommand]
-    private Task OnAboutAppAsync()
+    private static Task<MessageBoxResult> OnAboutAppAsync()
     {
         var aboutAppPage = new AboutAppPage();
 
@@ -124,17 +127,18 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     {
         var dialog = new FolderBrowserDialog();
 
-        if (dialog.ShowDialog() is not DialogResult.Cancel)
-            return InitFontServiceAsync(dialog.SelectedPath);
-
-        return Task.CompletedTask;
+        return dialog.ShowDialog() is not DialogResult.Cancel
+            ? InitFontServiceAsync(dialog.SelectedPath)
+            : Task.CompletedTask;
     }
 
     [RelayCommand]
     private async Task OnCopyToClipboardAsync()
     {
         if (_fontService is null)
+        {
             return;
+        }
 
         using var stream = await _fontService.RenderTextImageAsync(CopyWithTransparentBackground).ConfigureAwait(false);
 
@@ -148,7 +152,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private Task OnChangeTextColorAsync()
     {
         if (_fontService is null)
+        {
             return Task.CompletedTask;
+        }
 
         if (GetColor() is Color color)
         {
@@ -163,7 +169,9 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     private Task OnChangeBackgroundColorAsync()
     {
         if (_fontService is null)
+        {
             return Task.CompletedTask;
+        }
 
         if (GetColor() is Color color)
         {
@@ -234,6 +242,25 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                DisposeFontService();
+            }
+
+            _disposed = true;
+        }
+    }
+
+    private void DisposeFontService()
+    {
         if (_fontService is not null)
         {
             _fontService.TextImageUpdated -= OnTextImageUpdated;
@@ -246,7 +273,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private Task InitFontServiceAsync(string fontsPath)
     {
-        Dispose();
+        DisposeFontService();
 
         _fontService = new(fontsPath);
         _fontService.FontTextureUpdated += OnFontTextureUpdated;
@@ -257,17 +284,34 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         return _fontService.SetTextColorAsync(ImageTextColor.Color);
     }
 
-    private Color? GetColor()
+    private void OnTextImageUpdated(object? sender, Events.ImageSourceEventArgs e)
+        => System.Windows.Application.Current.Dispatcher.Invoke(() => TextImageSource = e.ImageSource);
+
+    private void OnFontTextureUpdated(object? sender, Events.ImageSourceEventArgs e)
+        => System.Windows.Application.Current.Dispatcher.Invoke(() => FontTextureSource = e.ImageSource);
+
+    private void OnImageNotCompleted(object? sender, EventArgs e)
+        => System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            _snackbarService.Show(
+                "Увага",
+                "Збільште роздільну здатність зображення, оскільки текст не поміщається на зображенні.",
+                ControlAppearance.Danger,
+                new SymbolIcon(SymbolRegular.SlideSize24),
+                TimeSpan.FromSeconds(2.5)));
+
+    private static Color? GetColor()
     {
         var dialog = new ColorDialog();
         if (dialog.ShowDialog() is DialogResult.Cancel)
+        {
             return null;
+        }
 
         var color = dialog.Color;
         return Color.FromArgb(color.A, color.R, color.G, color.B);
     }
 
-    private ImageSource GetImageSourceFromUri(string uri)
+    private static BitmapImage GetImageSourceFromUri(string uri)
     {
         var imageSource = new BitmapImage();
 
@@ -276,26 +320,5 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         imageSource.EndInit();
 
         return imageSource;
-    }
-
-    private void OnTextImageUpdated(object? sender, Events.ImageSourceEventArgs e)
-    {
-        System.Windows.Application.Current.Dispatcher.Invoke(() => TextImageSource = e.ImageSource);
-    }
-
-    private void OnFontTextureUpdated(object? sender, Events.ImageSourceEventArgs e)
-    {
-        System.Windows.Application.Current.Dispatcher.Invoke(() => FontTextureSource = e.ImageSource);
-    }
-
-    private void OnImageNotCompleted(object? sender, EventArgs e)
-    {
-        System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            _snackbarService.Show(
-                "Увага",
-                "Збільште роздільну здатність зображення, оскільки текст не поміщається на зображенні.",
-                ControlAppearance.Danger, 
-                new SymbolIcon(SymbolRegular.SlideSize24),
-                TimeSpan.FromSeconds(2.5)));
     }
 }

@@ -10,14 +10,12 @@ using System.Windows.Media.Imaging;
 
 namespace StalkerFontRenderer.Services;
 
-class FontService : IDisposable
+class FontService(string fontsPath) : IDisposable
 {
+    private readonly FontPathManager _fontPathManager = new(fontsPath);
     private FontRenderer? _fontRenderer;
-    private FontPathManager _fontPathManager;
-    public FontService(string fontsPath)
-    {
-        _fontPathManager = new(fontsPath);
-    }
+
+    private bool _disposed;
 
     public event EventHandler<ImageSourceEventArgs>? FontTextureUpdated;
     public event EventHandler<ImageSourceEventArgs>? TextImageUpdated;
@@ -37,8 +35,22 @@ class FontService : IDisposable
 
     public void Dispose()
     {
-        _fontRenderer?.Dispose();
-        _fontRenderer = null;
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _fontRenderer?.Dispose();
+                _fontRenderer = null;
+            }
+
+            _disposed = true;
+        }
     }
 
     public Task SetFontAsync(string fontName)
@@ -105,11 +117,11 @@ class FontService : IDisposable
         if (!useTransparentBackground)
         {
             model = model with
-            { 
-                A = BackgroundColor.A, 
-                R = BackgroundColor.R, 
-                G = BackgroundColor.G, 
-                B = BackgroundColor.B 
+            {
+                A = BackgroundColor.A,
+                R = BackgroundColor.R,
+                G = BackgroundColor.G,
+                B = BackgroundColor.B
             };
         }
 
@@ -134,13 +146,9 @@ class FontService : IDisposable
     }
 
     private Task OnUpdatedTextImagePropertyAsync(bool forced = false)
-    {
-        if (_fontRenderer is not null && (forced || !string.IsNullOrEmpty(ImageText)))
-        {
-            return OnTextImageUpdatedAsync();
-        }
-        return Task.CompletedTask;
-    }
+        => _fontRenderer is not null && (forced || !string.IsNullOrEmpty(ImageText))
+            ? OnTextImageUpdatedAsync()
+            : Task.CompletedTask;
 
     private async Task OnTextImageUpdatedAsync()
     {
@@ -158,7 +166,7 @@ class FontService : IDisposable
         FontTextureUpdated?.Invoke(this, new(imageSource));
     }
 
-    private ImageSource GetImageSource(Stream stream)
+    private static BitmapImage GetImageSource(Stream stream)
     {
         var imageSource = new BitmapImage();
 

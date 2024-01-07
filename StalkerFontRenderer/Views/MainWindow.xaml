@@ -16,7 +16,7 @@
     Title="Відмальовувач шрифтів S.T.A.L.K.E.R."
     Height="600" Width="1200"
     MinHeight="480" MinWidth="1185">
-    
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -158,7 +158,7 @@
 
                             <ui:SnackbarPresenter x:Name="SnackbarPresenter" />
                         </Grid>
-                        
+
                         <GridSplitter 
                             Grid.Column="1"
                             Width="6"
