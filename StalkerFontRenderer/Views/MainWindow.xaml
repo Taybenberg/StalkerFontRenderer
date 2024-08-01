@@ -85,7 +85,7 @@
                         Icon="{ui:SymbolIcon FolderOpen20, Filled=True}"
                         Command="{Binding LoadFontsCommand, Mode=OneWay}" />
 
-                    <ListView
+                    <ui:ListView
                         Grid.Row="1"
                         ItemsSource="{Binding FontNames, Mode=OneWay}"
                         SelectedItem="{Binding SelectedFontName, Mode=OneWayToSource}">
@@ -96,7 +96,7 @@
                                     Text="{Binding}"/>
                             </DataTemplate>
                         </ListView.ItemTemplate>
-                    </ListView>
+                    </ui:ListView>
                 </Grid>
 
                 <GridSplitter 

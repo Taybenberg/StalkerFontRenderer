@@ -86,12 +86,12 @@
             Text="Приєднуйтеся до Discord-спільнот ☢️"
             Foreground="{ui:ThemeResource TextFillColorPrimaryBrush}"/>
 
-        <ui:Hyperlink
+        <ui:HyperlinkButton
             Icon="{ui:SymbolIcon Link24}"
             Content="S.T.A.L.K.E.R. Official Community"
             NavigateUri="https://discord.gg/stalker" />
 
-        <ui:Hyperlink
+        <ui:HyperlinkButton
             Icon="{ui:SymbolIcon Link24}"
             Content="S.T.A.L.K.E.R. NEWS UA"
             NavigateUri="https://discord.gg/kGcyFcyY3F"/>

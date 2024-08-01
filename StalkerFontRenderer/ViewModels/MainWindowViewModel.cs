@@ -86,7 +86,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _imageBackgroundColor = Color.FromArgb(255, 0, 0, 0).ToBrush();
         _imageTextColor = Color.FromArgb(255, 255, 255, 255).ToBrush();
 
-        _fontNames = Enumerable.Empty<string>();
+        _fontNames = [];
 
         _selectedFontName = string.Empty;
         _imageText = string.Empty;
